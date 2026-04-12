@@ -8,9 +8,9 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Configurar Entity Framework con SQL Server
+// Configurar Entity Framework con SQLite
 builder.Services.AddDbContext<ReservaDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configurar CORS para permitir peticiones desde el frontend (React)
 builder.Services.AddCors(options =>
