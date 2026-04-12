@@ -1,0 +1,30 @@
+# .gitignore simplificado para React y .NET
+
+# Node.js (Frontend)
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# .NET (Backend)
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.sln.docstates
+.vs/
+
+# SQL Server localDB
+*.mdf
+*.ldf
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.bak

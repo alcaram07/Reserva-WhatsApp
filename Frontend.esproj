@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.1738743">
+  <PropertyGroup>
+    <StartupCommand>npm run dev</StartupCommand>
+    <JavaScriptTestRoot>src\</JavaScriptTestRoot>
+    <JavaScriptTestFramework>Jest</JavaScriptTestFramework>
+    <!-- Comando para publicar el proyecto -->
+    <PublishCommand>npm run build</PublishCommand>
+    <!-- Carpeta donde se genera el build -->
+    <BuildOutputFolder>$(MSBuildProjectDirectory)\dist</BuildOutputFolder>
+  </PropertyGroup>
+</Project>
