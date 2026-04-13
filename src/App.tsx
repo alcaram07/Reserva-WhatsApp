@@ -26,13 +26,14 @@ function App() {
   const [phone, setPhone] = useState('');
   const [reservas, setReservas] = useState<any[]>([]);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const businessPhone = '59899097344'; 
 
   const progress = (step / 3) * 100;
 
   const fetchReservas = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/reservas');
+      const response = await fetch(`${API_URL}/api/reservas`);
       const data = await response.json();
       setReservas(data);
     } catch (error) {
@@ -60,12 +61,12 @@ function App() {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/reservas', {
+      const response = await fetch(`${API_URL}/api/reservas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reservaData)
       });
-      if (response.ok) console.log('Guardado en SQL Server');
+      if (response.ok) console.log('Guardado en base de datos SQLite');
     } catch (error) {
       console.error('Error en backend:', error);
     }
