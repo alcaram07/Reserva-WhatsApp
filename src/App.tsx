@@ -18,6 +18,10 @@ const SERVICES: Service[] = [
 
 function App() {
   const [view, setView] = useState<'user' | 'admin'>('user');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [step, setStep] = useState(1);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [date, setDate] = useState('');
@@ -38,6 +42,27 @@ function App() {
       setReservas(data);
     } catch (error) {
       console.error('Error al obtener reservas:', error);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, password })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setIsLoggedIn(true);
+        fetchReservas();
+      } else {
+        setLoginError('Credenciales incorrectas');
+      }
+    } catch (error) {
+      setLoginError('Error al conectar con el servidor');
     }
   };
 
@@ -79,13 +104,13 @@ function App() {
     <div className="app-container">
       <nav className="admin-nav">
         <button onClick={() => { setView('user'); setStep(1); }}>Reservar</button>
-        <button onClick={() => { setView('admin'); fetchReservas(); }}>Admin</button>
+        <button onClick={() => { setView('admin'); if (isLoggedIn) fetchReservas(); }}>Admin</button>
       </nav>
 
       <header className="header">
         <div className="logo-badge">Reserva Pro</div>
         <h1>{view === 'user' ? 'Agenda tu cita' : 'Panel de Control'}</h1>
-        <p>{view === 'user' ? 'Confirmación instantánea vía WhatsApp' : 'Listado de reservas en SQL Server'}</p>
+        <p>{view === 'user' ? 'Confirmación instantánea vía WhatsApp' : 'Listado de reservas en SQLite'}</p>
       </header>
 
       {view === 'user' ? (
@@ -180,36 +205,66 @@ function App() {
         </>
       ) : (
         <main className="main-content admin-view animate-fade-in">
-          <h2>Reservas Registradas</h2>
-          <div className="table-container">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Teléfono</th>
-                  <th>Servicio</th>
-                  <th>Fecha/Hora</th>
-                  <th>Registro</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reservas.length === 0 ? (
-                  <tr><td colSpan={5}>No hay reservas guardadas aún.</td></tr>
-                ) : (
-                  reservas.map((r) => (
-                    <tr key={r.id}>
-                      <td>{r.nombre}</td>
-                      <td>{r.telefono}</td>
-                      <td>{r.servicio}</td>
-                      <td>{r.fecha} {r.hora}</td>
-                      <td>{new Date(r.fechaRegistro).toLocaleDateString()}</td>
+          {!isLoggedIn ? (
+            <section className="login-container">
+              <h2>Acceso Administrador</h2>
+              <form onSubmit={handleLogin} className="login-form">
+                <div className="form-group">
+                  <label>Usuario</label>
+                  <input 
+                    type="text" 
+                    value={user} 
+                    onChange={(e) => setUser(e.target.value)} 
+                    placeholder="admin"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Contraseña</label>
+                  <input 
+                    type="password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    placeholder="••••••••"
+                  />
+                </div>
+                {loginError && <p className="error-message">{loginError}</p>}
+                <button type="submit" className="btn-primary">Entrar</button>
+              </form>
+            </section>
+          ) : (
+            <>
+              <h2>Reservas Registradas</h2>
+              <div className="table-container">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Teléfono</th>
+                      <th>Servicio</th>
+                      <th>Fecha/Hora</th>
+                      <th>Registro</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <button className="btn-secondary" onClick={fetchReservas} style={{ marginTop: '20px' }}>Actualizar Lista</button>
+                  </thead>
+                  <tbody>
+                    {reservas.length === 0 ? (
+                      <tr><td colSpan={5}>No hay reservas guardadas aún.</td></tr>
+                    ) : (
+                      reservas.map((r) => (
+                        <tr key={r.id}>
+                          <td>{r.nombre}</td>
+                          <td>{r.telefono}</td>
+                          <td>{r.servicio}</td>
+                          <td>{r.fecha} {r.hora}</td>
+                          <td>{new Date(r.fechaRegistro).toLocaleDateString()}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <button className="btn-secondary" onClick={fetchReservas} style={{ marginTop: '20px' }}>Actualizar Lista</button>
+            </>
+          )}
         </main>
       )}
 
