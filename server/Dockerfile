@@ -3,12 +3,12 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
 # Copiar csproj y restaurar dependencias
-COPY *.csproj ./
-RUN dotnet restore
+COPY ReservaBackend.csproj ./
+RUN dotnet restore ReservaBackend.csproj
 
 # Copiar el resto y compilar
 COPY . ./
-RUN dotnet publish -c Release -o out
+RUN dotnet publish ReservaBackend.csproj -c Release -o out
 
 # Etapa de ejecución
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
