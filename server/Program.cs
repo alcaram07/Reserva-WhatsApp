@@ -11,40 +11,39 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // 2. Configurar Base de Datos
-var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
-                         ?? builder.Configuration.GetConnectionString("DefaultConnection");
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+string connectionString;
 
-string? connectionString = rawConnectionString;
-
-// Traducción segura de URL de Neon/Postgres a formato .NET
-if (rawConnectionString != null && rawConnectionString.StartsWith("postgres://"))
+if (!string.IsNullOrEmpty(databaseUrl) && databaseUrl.StartsWith("postgres://"))
 {
-    try 
+    // Convertir URL de Postgres a Connection String de .NET de forma profesional
+    var databaseUri = new Uri(databaseUrl);
+    var userInfo = databaseUri.UserInfo.Split(':');
+    
+    var npgsqlBuilder = new NpgsqlConnectionStringBuilder
     {
-        var uri = new Uri(rawConnectionString);
-        var userInfo = uri.UserInfo.Split(':');
-        var npgsqlBuilder = new NpgsqlConnectionStringBuilder
-        {
-            Host = uri.Host,
-            Port = uri.Port,
-            Database = uri.AbsolutePath.TrimStart('/'),
-            Username = userInfo[0],
-            Password = userInfo[1],
-            SslMode = SslMode.Require,
-            TrustServerCertificate = true
-        };
-        connectionString = npgsqlBuilder.ToString();
-        Console.WriteLine("[BOOT] Configurada conexión PostgreSQL (Neon)");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[BOOT ERROR] Error parseando DATABASE_URL: {ex.Message}");
-    }
+        Host = databaseUri.Host,
+        Port = databaseUri.Port > 0 ? databaseUri.Port : 5432,
+        Database = databaseUri.AbsolutePath.TrimStart('/'),
+        Username = userInfo[0],
+        Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
+        SslMode = SslMode.Require,
+        TrustServerCertificate = true,
+        Pooling = true,
+        KeepAlive = 30
+    };
+    connectionString = npgsqlBuilder.ToString();
+    Console.WriteLine("[BOOT] Usando PostgreSQL (Neon)");
+}
+else
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=barberia.db";
+    Console.WriteLine("[BOOT] Usando SQLite local");
 }
 
 builder.Services.AddDbContext<ReservaDbContext>(options =>
 {
-    if (connectionString != null && (connectionString.Contains("Host=") || connectionString.Contains("Port=")))
+    if (connectionString.Contains("Host="))
     {
         options.UseNpgsql(connectionString);
     }
@@ -59,39 +58,32 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
 
-// --- FORZAR CREACIÓN DE BASE DE DATOS Y TABLAS ---
+// --- INICIALIZACIÓN CRÍTICA DE BASE DE DATOS ---
 using (var scope = app.Services.CreateScope())
 {
+    var services = scope.ServiceProvider;
     try 
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<ReservaDbContext>();
-        Console.WriteLine("[BOOT] Verificando base de datos...");
-        dbContext.Database.EnsureCreated();
-        Console.WriteLine("[BOOT] Base de datos lista");
+        var context = services.GetRequiredService<ReservaDbContext>();
+        Console.WriteLine("[BOOT] Verificando tablas en la nube...");
+        context.Database.EnsureCreated();
+        Console.WriteLine("[BOOT] Base de datos conectada y lista");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[BOOT ERROR] Error en base de datos: {ex.Message}");
+        Console.WriteLine($"[FATAL ERROR] Fallo al conectar con la DB: {ex.Message}");
     }
-}
-
-// 4. Configurar el pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
 }
 
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
 
-Console.WriteLine("[BOOT] Aplicación lista para recibir peticiones");
+Console.WriteLine("[BOOT] Servidor listo para recibir clientes");
 app.Run();
