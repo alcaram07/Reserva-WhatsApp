@@ -1,5 +1,5 @@
 # Etapa de compilación
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 WORKDIR /app
 
 # Copiar csproj y restaurar dependencias
@@ -11,19 +11,18 @@ COPY . ./
 RUN dotnet publish ReservaBackend.csproj -c Release -o out
 
 # Etapa de ejecución
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine
 WORKDIR /app
 COPY --from=build /app/out .
 
-# INSTALAR LIBRERÍAS DE GLOBALIZACIÓN (Corrige el error 139 en Render)
-USER root
-RUN apt-get update && apt-get install -y libicu-dev && rm -rf /var/lib/apt/lists/*
+# Configuración de globalización para Alpine (mucho más estable en Render)
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+RUN apk add --no-cache icu-libs icu-data-full
 
-# Asegurar que SQLite tenga permisos de escritura (por si se usa local)
+# Asegurar que SQLite tenga permisos de escritura (fallback)
 RUN touch reservas.db && chmod 666 reservas.db
 
-# Exponer el puerto que usa Render
+# Exponer el puerto
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
