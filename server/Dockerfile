@@ -15,7 +15,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/out .
 
-# Asegurar que SQLite tenga permisos de escritura
+# Desactivar la globalización invariante para evitar el error 139 (segmentation fault)
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
+
+# Asegurar que SQLite tenga permisos de escritura (por si se usa en local/fallback)
 RUN touch reservas.db && chmod 666 reservas.db
 
 # Exponer el puerto que usa Render (habitualmente 8080 o 10000)
