@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ReservaBackend.Data;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +9,29 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // 2. Configurar Base de Datos (PostgreSQL para producción, SQLite para local)
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
-                      ?? builder.Configuration.GetConnectionString("DefaultConnection");
+var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
+                         ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+string? connectionString = rawConnectionString;
+
+// Si es una URL de Neon (postgres://), la traducimos al formato de .NET
+if (rawConnectionString != null && rawConnectionString.StartsWith("postgres://"))
+{
+    var databaseUri = new Uri(rawConnectionString);
+    var userInfo = databaseUri.UserInfo.Split(':');
+
+    connectionString = $"Host={databaseUri.Host};" +
+                       $"Port={databaseUri.Port};" +
+                       $"Database={databaseUri.AbsolutePath.TrimStart('/')};" +
+                       $"Username={userInfo[0]};" +
+                       $"Password={userInfo[1]};" +
+                       $"SslMode=Require;" +
+                       $"Trust Server Certificate=true;";
+}
 
 builder.Services.AddDbContext<ReservaDbContext>(options =>
 {
-    if (connectionString != null && connectionString.Contains("postgres://") || connectionString != null && connectionString.Contains("Host="))
+    if (connectionString != null && (connectionString.Contains("Host=") || connectionString.Contains("Port=")))
     {
         options.UseNpgsql(connectionString);
     }
