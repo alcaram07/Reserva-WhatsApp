@@ -15,13 +15,15 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/out .
 
-# Desactivar la globalización invariante para evitar el error 139 (segmentation fault)
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
+# INSTALAR LIBRERÍAS DE GLOBALIZACIÓN (Corrige el error 139 en Render)
+USER root
+RUN apt-get update && apt-get install -y libicu-dev && rm -rf /var/lib/apt/lists/*
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
-# Asegurar que SQLite tenga permisos de escritura (por si se usa en local/fallback)
+# Asegurar que SQLite tenga permisos de escritura (por si se usa local)
 RUN touch reservas.db && chmod 666 reservas.db
 
-# Exponer el puerto que usa Render (habitualmente 8080 o 10000)
+# Exponer el puerto que usa Render
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
