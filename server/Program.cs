@@ -7,9 +7,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// 2. Configurar SQLite
+// 2. Configurar Base de Datos (PostgreSQL para producción, SQLite para local)
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
+                      ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<ReservaDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (connectionString != null && connectionString.Contains("postgres://") || connectionString != null && connectionString.Contains("Host="))
+    {
+        options.UseNpgsql(connectionString);
+    }
+    else
+    {
+        options.UseSqlite(connectionString);
+    }
+});
 
 // 3. Configurar CORS
 builder.Services.AddCors(options =>
@@ -28,7 +40,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ReservaDbContext>();
-    dbContext.Database.EnsureCreated(); // Esto crea las tablas si no existen
+    dbContext.Database.EnsureCreated();
 }
 
 // 4. Configurar el pipeline
