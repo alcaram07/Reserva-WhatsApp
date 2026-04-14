@@ -3,21 +3,20 @@ using ReservaBackend.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 1. Agregar controladores
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Configurar Entity Framework con SQLite
+// 2. Configurar SQLite
 builder.Services.AddDbContext<ReservaDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Configurar CORS para permitir peticiones desde el frontend (React)
+// 3. Configurar CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -25,19 +24,21 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --- FORZAR CREACIÓN DE BASE DE DATOS Y TABLAS ---
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ReservaDbContext>();
+    dbContext.Database.EnsureCreated(); // Esto crea las tablas si no existen
+}
+
+// 4. Configurar el pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-
-// Usar la política de CORS antes de MapControllers
-app.UseCors("AllowReactApp");
-
+app.UseCors("AllowAll");
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

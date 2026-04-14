@@ -24,7 +24,7 @@ public class ReservasController : ControllerBase
         _context.Reservas.Add(nuevaReserva);
         await _context.SaveChangesAsync();
         
-        Console.WriteLine($"[DB] Nueva reserva guardada en SQL Server: {nuevaReserva.Nombre}");
+        Console.WriteLine($"[DB] Nueva reserva guardada en SQLite: {nuevaReserva.Nombre}");
         
         return Ok(new { success = true, id = nuevaReserva.Id });
     }
@@ -36,14 +36,4 @@ public class ReservasController : ControllerBase
         return Ok(reservas);
     }
 }
-
-public class Reserva
-{
-    public int Id { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
-    public string Servicio { get; set; } = string.Empty;
-    public string Fecha { get; set; } = string.Empty;
-    public string Hora { get; set; } = string.Empty;
-    public DateTime FechaRegistro { get; set; }
-}
+// He eliminado la clase Reserva de aquí porque ya existe en ReservaBackend.Data

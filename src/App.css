@@ -284,3 +284,91 @@
   font-size: 0.9rem;
   text-align: center;
 }
+
+/* Admin Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.admin-tabs button {
+  background: transparent;
+  border: none;
+  padding: 10px 20px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-tabs button.active {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+  margin-bottom: -12px;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-add {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: background 0.2s;
+}
+
+.btn-icon:hover {
+  background: #eee;
+}
+
+.btn-icon.delete:hover {
+  color: #e63946;
+  background: #fce8e8;
+}
+
+.btn-icon.save {
+  color: var(--primary-color);
+}
+
+.btn-icon.cancel {
+  color: #666;
+}
+
+.actions {
+  display: flex;
+  gap: 5px;
+}
+
+.adding-row {
+  background: #f0fff4 !important;
+}
+
+.admin-table input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+}

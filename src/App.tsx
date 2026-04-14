@@ -1,39 +1,52 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
-import { Calendar, Clock, User, Phone, Send } from 'lucide-react'
+import { Calendar, Clock, User, Phone, Send, Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 
-interface Service {
+interface Servicio {
   id: number;
-  name: string;
-  price: string;
-  duration: string;
+  nombre: string;
+  precio: string;
+  duracion: string;
 }
-
-const SERVICES: Service[] = [
-  { id: 1, name: 'Corte de Cabello', price: '$2000', duration: '45 min' },
-  { id: 2, name: 'Barba y Perfilado', price: '$1500', duration: '30 min' },
-  { id: 3, name: 'Combo Corte + Barba', price: '$3000', duration: '75 min' },
-  { id: 4, name: 'Tratamiento Capilar', price: '$2500', duration: '60 min' },
-];
 
 function App() {
   const [view, setView] = useState<'user' | 'admin'>('user');
+  const [adminTab, setAdminTab] = useState<'reservas' | 'servicios'>('reservas');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  
   const [step, setStep] = useState(1);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [selectedService, setSelectedService] = useState<Servicio | null>(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [reservas, setReservas] = useState<any[]>([]);
 
+  // Estados para gestión de servicios
+  const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
+  const [newServicio, setNewServicio] = useState({ nombre: '', precio: '', duracion: '' });
+  const [isAdding, setIsAdding] = useState(false);
+
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const businessPhone = '59899097344'; 
 
-  const progress = (step / 3) * 100;
+  useEffect(() => {
+    fetchServicios();
+  }, []);
+
+  const fetchServicios = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/servicios`);
+      const data = await response.json();
+      setServicios(data);
+    } catch (error) {
+      console.error('Error al obtener servicios:', error);
+    }
+  };
 
   const fetchReservas = async () => {
     try {
@@ -66,6 +79,54 @@ function App() {
     }
   };
 
+  const handleCrearServicio = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/servicios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newServicio)
+      });
+      if (response.ok) {
+        fetchServicios();
+        setNewServicio({ nombre: '', precio: '', duracion: '' });
+        setIsAdding(false);
+      }
+    } catch (error) {
+      console.error('Error al crear servicio:', error);
+    }
+  };
+
+  const handleEditarServicio = async () => {
+    if (!editingServicio) return;
+    try {
+      const response = await fetch(`${API_URL}/api/servicios/${editingServicio.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingServicio)
+      });
+      if (response.ok) {
+        fetchServicios();
+        setEditingServicio(null);
+      }
+    } catch (error) {
+      console.error('Error al editar servicio:', error);
+    }
+  };
+
+  const handleEliminarServicio = async (id: number) => {
+    if (!confirm('¿Seguro que quieres eliminar este servicio?')) return;
+    try {
+      const response = await fetch(`${API_URL}/api/servicios/${id}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        fetchServicios();
+      }
+    } catch (error) {
+      console.error('Error al eliminar servicio:', error);
+    }
+  };
+
   const handleNextStep = () => {
     if (step === 1 && !selectedService) return;
     if (step === 2 && (!date || !time)) return;
@@ -80,7 +141,7 @@ function App() {
     const reservaData = {
       nombre: name,
       telefono: phone,
-      servicio: selectedService?.name,
+      servicio: selectedService?.nombre,
       fecha: date,
       hora: time
     };
@@ -96,9 +157,11 @@ function App() {
       console.error('Error en backend:', error);
     }
 
-    const message = `Hola! Me gustaría realizar una reserva:%0A%0A*Servicio:* ${selectedService?.name}%0A*Fecha:* ${date}%0A*Hora:* ${time}%0A*Nombre:* ${name}%0A*Teléfono:* ${phone}%0A%0AConfirmame disponibilidad, por favor!`;
+    const message = `Hola! Me gustaría realizar una reserva:%0A%0A*Servicio:* ${selectedService?.nombre}%0A*Fecha:* ${date}%0A*Hora:* ${time}%0A*Nombre:* ${name}%0A*Teléfono:* ${phone}%0A%0AConfirmame disponibilidad, por favor!`;
     window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
   };
+
+  const progress = (step / 3) * 100;
 
   return (
     <div className="app-container">
@@ -110,7 +173,7 @@ function App() {
       <header className="header">
         <div className="logo-badge">Reserva Pro</div>
         <h1>{view === 'user' ? 'Agenda tu cita' : 'Panel de Control'}</h1>
-        <p>{view === 'user' ? 'Confirmación instantánea vía WhatsApp' : 'Listado de reservas en SQLite'}</p>
+        <p>{view === 'user' ? 'Confirmación instantánea vía WhatsApp' : 'Gestión completa de reservas y servicios'}</p>
       </header>
 
       {view === 'user' ? (
@@ -132,15 +195,15 @@ function App() {
               <section className="step-content animate-fade-in">
                 <h2>Selecciona un Servicio</h2>
                 <div className="services-grid">
-                  {SERVICES.map((service) => (
+                  {servicios.map((service) => (
                     <div 
                       key={service.id} 
                       className={`service-card ${selectedService?.id === service.id ? 'selected' : ''}`}
                       onClick={() => setSelectedService(service)}
                     >
-                      <h3>{service.name}</h3>
-                      <p className="price">{service.price}</p>
-                      <p className="duration">{service.duration}</p>
+                      <h3>{service.nombre}</h3>
+                      <p className="price">{service.precio}</p>
+                      <p className="duration">{service.duracion}</p>
                     </div>
                   ))}
                 </div>
@@ -188,7 +251,7 @@ function App() {
                 
                 <div className="summary-card">
                   <h3>Resumen de Reserva</h3>
-                  <p><strong>Servicio:</strong> {selectedService?.name}</p>
+                  <p><strong>Servicio:</strong> {selectedService?.nombre}</p>
                   <p><strong>Fecha:</strong> {date}</p>
                   <p><strong>Hora:</strong> {time}</p>
                 </div>
@@ -211,21 +274,11 @@ function App() {
               <form onSubmit={handleLogin} className="login-form">
                 <div className="form-group">
                   <label>Usuario</label>
-                  <input 
-                    type="text" 
-                    value={user} 
-                    onChange={(e) => setUser(e.target.value)} 
-                    placeholder="admin"
-                  />
+                  <input type="text" value={user} onChange={(e) => setUser(e.target.value)} placeholder="admin" />
                 </div>
                 <div className="form-group">
                   <label>Contraseña</label>
-                  <input 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    placeholder="••••••••"
-                  />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
                 </div>
                 {loginError && <p className="error-message">{loginError}</p>}
                 <button type="submit" className="btn-primary">Entrar</button>
@@ -233,36 +286,103 @@ function App() {
             </section>
           ) : (
             <>
-              <h2>Reservas Registradas</h2>
-              <div className="table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Teléfono</th>
-                      <th>Servicio</th>
-                      <th>Fecha/Hora</th>
-                      <th>Registro</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reservas.length === 0 ? (
-                      <tr><td colSpan={5}>No hay reservas guardadas aún.</td></tr>
-                    ) : (
-                      reservas.map((r) => (
-                        <tr key={r.id}>
-                          <td>{r.nombre}</td>
-                          <td>{r.telefono}</td>
-                          <td>{r.servicio}</td>
-                          <td>{r.fecha} {r.hora}</td>
-                          <td>{new Date(r.fechaRegistro).toLocaleDateString()}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <div className="admin-tabs">
+                <button className={adminTab === 'reservas' ? 'active' : ''} onClick={() => setAdminTab('reservas')}>Reservas</button>
+                <button className={adminTab === 'servicios' ? 'active' : ''} onClick={() => setAdminTab('servicios')}>Servicios</button>
               </div>
-              <button className="btn-secondary" onClick={fetchReservas} style={{ marginTop: '20px' }}>Actualizar Lista</button>
+
+              {adminTab === 'reservas' ? (
+                <>
+                  <h2>Reservas Registradas</h2>
+                  <div className="table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Cliente</th>
+                          <th>Teléfono</th>
+                          <th>Servicio</th>
+                          <th>Fecha/Hora</th>
+                          <th>Registro</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reservas.length === 0 ? (
+                          <tr><td colSpan={5}>No hay reservas guardadas aún.</td></tr>
+                        ) : (
+                          reservas.map((r) => (
+                            <tr key={r.id}>
+                              <td>{r.nombre}</td>
+                              <td>{r.telefono}</td>
+                              <td>{r.servicio}</td>
+                              <td>{r.fecha} {r.hora}</td>
+                              <td>{new Date(r.fechaRegistro).toLocaleDateString()}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button className="btn-secondary" onClick={fetchReservas} style={{ marginTop: '20px' }}>Actualizar Lista</button>
+                </>
+              ) : (
+                <section className="servicios-admin">
+                  <div className="admin-header">
+                    <h2>Gestión de Servicios</h2>
+                    <button className="btn-add" onClick={() => setIsAdding(true)}><Plus size={18} /> Nuevo Servicio</button>
+                  </div>
+
+                  <div className="table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Precio</th>
+                          <th>Duración</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {isAdding && (
+                          <tr className="adding-row">
+                            <td><input type="text" placeholder="Nombre" value={newServicio.nombre} onChange={e => setNewServicio({...newServicio, nombre: e.target.value})} /></td>
+                            <td><input type="text" placeholder="Precio" value={newServicio.precio} onChange={e => setNewServicio({...newServicio, precio: e.target.value})} /></td>
+                            <td><input type="text" placeholder="Duración" value={newServicio.duracion} onChange={e => setNewServicio({...newServicio, duracion: e.target.value})} /></td>
+                            <td className="actions">
+                              <button onClick={handleCrearServicio} className="btn-icon save"><Check size={18} /></button>
+                              <button onClick={() => setIsAdding(false)} className="btn-icon cancel"><X size={18} /></button>
+                            </td>
+                          </tr>
+                        )}
+                        {servicios.map((s) => (
+                          <tr key={s.id}>
+                            {editingServicio?.id === s.id ? (
+                              <>
+                                <td><input type="text" value={editingServicio.nombre} onChange={e => setEditingServicio({...editingServicio, nombre: e.target.value})} /></td>
+                                <td><input type="text" value={editingServicio.precio} onChange={e => setEditingServicio({...editingServicio, precio: e.target.value})} /></td>
+                                <td><input type="text" value={editingServicio.duracion} onChange={e => setEditingServicio({...editingServicio, duracion: e.target.value})} /></td>
+                                <td className="actions">
+                                  <button onClick={handleEditarServicio} className="btn-icon save"><Check size={18} /></button>
+                                  <button onClick={() => setEditingServicio(null)} className="btn-icon cancel"><X size={18} /></button>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td>{s.nombre}</td>
+                                <td>{s.precio}</td>
+                                <td>{s.duracion}</td>
+                                <td className="actions">
+                                  <button onClick={() => setEditingServicio(s)} className="btn-icon"><Edit2 size={18} /></button>
+                                  <button onClick={() => handleEliminarServicio(s.id)} className="btn-icon delete"><Trash2 size={18} /></button>
+                                </td>
+                              </>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
             </>
           )}
         </main>
