@@ -71,8 +71,8 @@ using (var scope = app.Services.CreateScope())
     try 
     {
         var context = services.GetRequiredService<ReservaDbContext>();
-        Console.WriteLine("[BOOT] Verificando tablas en la nube...");
-        context.Database.EnsureCreated();
+        Console.WriteLine("[BOOT] Aplicando migraciones...");
+        context.Database.Migrate();
         Console.WriteLine("[BOOT] Base de datos conectada y lista");
     }
     catch (Exception ex)

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { Calendar, Clock, User, Phone, Send, Plus, Trash2, Edit2, Check, X } from 'lucide-react'
+import { Calendar, Clock, User, Phone, Send, Plus, Trash2, Edit2, Check, X, MessageSquare } from 'lucide-react'
 
 interface Servicio {
   id: number;
@@ -9,9 +9,14 @@ interface Servicio {
   duracion: string;
 }
 
+interface Horario {
+  id: number;
+  hora: string;
+}
+
 function App() {
   const [view, setView] = useState<'user' | 'admin'>('user');
-  const [adminTab, setAdminTab] = useState<'reservas' | 'servicios'>('reservas');
+  const [adminTab, setAdminTab] = useState<'reservas' | 'servicios' | 'config'>('reservas');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
@@ -26,17 +31,33 @@ function App() {
   const [phone, setPhone] = useState('');
   const [reservas, setReservas] = useState<any[]>([]);
 
+  // Estados de Configuración
+  const [whatsapp, setWhatsapp] = useState('');
+  const [horarios, setHorarios] = useState<Horario[]>([]);
+  const [newHora, setNewHora] = useState('');
+
   // Estados para gestión de servicios
   const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
   const [newServicio, setNewServicio] = useState({ nombre: '', precio: '', duracion: '' });
   const [isAdding, setIsAdding] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const businessPhone = '59899097344'; 
 
   useEffect(() => {
     fetchServicios();
+    fetchConfig();
   }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/config`);
+      const data = await response.json();
+      setWhatsapp(data.whatsapp);
+      setHorarios(data.horarios);
+    } catch (error) {
+      console.error('Error al obtener config:', error);
+    }
+  };
 
   const fetchServicios = async () => {
     try {
@@ -76,6 +97,43 @@ function App() {
       }
     } catch (error) {
       setLoginError('Error al conectar con el servidor');
+    }
+  };
+
+  const handleUpdateWhatsapp = async () => {
+    try {
+      await fetch(`${API_URL}/api/config/whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(whatsapp)
+      });
+      alert('Número de WhatsApp actualizado');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleAddHorario = async () => {
+    if (!newHora) return;
+    try {
+      await fetch(`${API_URL}/api/config/horarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newHora)
+      });
+      setNewHora('');
+      fetchConfig();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleDeleteHorario = async (id: number) => {
+    try {
+      await fetch(`${API_URL}/api/config/horarios/${id}`, { method: 'DELETE' });
+      fetchConfig();
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
 
@@ -152,13 +210,13 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reservaData)
       });
-      if (response.ok) console.log('Guardado en base de datos SQLite');
+      if (response.ok) console.log('Guardado en base de datos');
     } catch (error) {
       console.error('Error en backend:', error);
     }
 
     const message = `Hola! Me gustaría realizar una reserva:%0A%0A*Servicio:* ${selectedService?.nombre}%0A*Fecha:* ${date}%0A*Hora:* ${time}%0A*Nombre:* ${name}%0A*Teléfono:* ${phone}%0A%0AConfirmame disponibilidad, por favor!`;
-    window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${whatsapp}?text=${message}`, '_blank');
   };
 
   const progress = (step / 3) * 100;
@@ -167,13 +225,13 @@ function App() {
     <div className="app-container">
       <nav className="admin-nav">
         <button onClick={() => { setView('user'); setStep(1); }}>Reservar</button>
-        <button onClick={() => { setView('admin'); if (isLoggedIn) fetchReservas(); }}>Admin</button>
+        <button onClick={() => { setView('admin'); if (isLoggedIn) { fetchReservas(); fetchConfig(); } }}>Admin</button>
       </nav>
 
       <header className="header">
         <div className="logo-badge">Reserva Pro</div>
         <h1>{view === 'user' ? 'Agenda tu cita' : 'Panel de Control'}</h1>
-        <p>{view === 'user' ? 'Confirmación instantánea vía WhatsApp' : 'Gestión completa de reservas y servicios'}</p>
+        <p>{view === 'user' ? 'Confirmación instantánea vía WhatsApp' : 'Gestión completa de reservas y configuración'}</p>
       </header>
 
       {view === 'user' ? (
@@ -222,12 +280,9 @@ function App() {
                   <label><Clock size={18} /> Hora</label>
                   <select value={time} onChange={(e) => setTime(e.target.value)}>
                     <option value="">Seleccionar hora</option>
-                    <option value="09:00">09:00 AM</option>
-                    <option value="10:00">10:00 AM</option>
-                    <option value="11:00">11:00 AM</option>
-                    <option value="15:00">03:00 PM</option>
-                    <option value="16:00">04:00 PM</option>
-                    <option value="17:00">05:00 PM</option>
+                    {horarios.map(h => (
+                      <option key={h.id} value={h.hora}>{h.hora}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="button-group">
@@ -289,9 +344,10 @@ function App() {
               <div className="admin-tabs">
                 <button className={adminTab === 'reservas' ? 'active' : ''} onClick={() => setAdminTab('reservas')}>Reservas</button>
                 <button className={adminTab === 'servicios' ? 'active' : ''} onClick={() => setAdminTab('servicios')}>Servicios</button>
+                <button className={adminTab === 'config' ? 'active' : ''} onClick={() => setAdminTab('config')}>Configuración</button>
               </div>
 
-              {adminTab === 'reservas' ? (
+              {adminTab === 'reservas' && (
                 <>
                   <h2>Reservas Registradas</h2>
                   <div className="table-container">
@@ -324,7 +380,9 @@ function App() {
                   </div>
                   <button className="btn-secondary" onClick={fetchReservas} style={{ marginTop: '20px' }}>Actualizar Lista</button>
                 </>
-              ) : (
+              )}
+
+              {adminTab === 'servicios' && (
                 <section className="servicios-admin">
                   <div className="admin-header">
                     <h2>Gestión de Servicios</h2>
@@ -380,6 +438,48 @@ function App() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </section>
+              )}
+
+              {adminTab === 'config' && (
+                <section className="config-admin animate-fade-in">
+                  <div className="config-card">
+                    <h3><MessageSquare size={20} /> Canal de Comunicación</h3>
+                    <p>Configura el número donde recibirás las reservas por WhatsApp.</p>
+                    <div className="form-inline">
+                      <input 
+                        type="text" 
+                        value={whatsapp} 
+                        onChange={(e) => setWhatsapp(e.target.value)} 
+                        placeholder="Ej: 59899097344"
+                      />
+                      <button onClick={handleUpdateWhatsapp} className="btn-primary">Guardar Número</button>
+                    </div>
+                  </div>
+
+                  <div className="config-card">
+                    <h3><Clock size={20} /> Horarios Disponibles</h3>
+                    <p>Gestiona las horas que tus clientes pueden elegir.</p>
+                    <div className="horarios-manager">
+                      <div className="form-inline">
+                        <input 
+                          type="text" 
+                          value={newHora} 
+                          onChange={(e) => setNewHora(e.target.value)} 
+                          placeholder="Ej: 18:30"
+                        />
+                        <button onClick={handleAddHorario} className="btn-add"><Plus size={18} /> Añadir Hora</button>
+                      </div>
+                      <div className="horarios-tags">
+                        {horarios.map(h => (
+                          <span key={h.id} className="horario-tag">
+                            {h.hora}
+                            <button onClick={() => handleDeleteHorario(h.id)}><X size={14} /></button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </section>
               )}

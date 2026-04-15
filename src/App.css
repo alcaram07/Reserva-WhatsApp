@@ -372,3 +372,83 @@
   border: 1px solid var(--primary-color);
   border-radius: 4px;
 }
+
+/* Config Styles */
+.config-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.config-card {
+  background: #f8fafc;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.config-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px 0;
+  color: var(--secondary-color);
+}
+
+.config-card p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.form-inline {
+  display: flex;
+  gap: 10px;
+}
+
+.form-inline input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.horarios-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.horarios-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.horario-tag {
+  background: white;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.horario-tag button {
+  background: transparent;
+  border: none;
+  color: #e63946;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+
+.horario-tag button:hover {
+  background: #fce8e8;
+  border-radius: 50%;
+}
