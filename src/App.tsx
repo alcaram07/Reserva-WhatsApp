@@ -490,45 +490,45 @@ function App() {
               {adminTab === 'config' && (
                 <section className="config-admin animate-fade-in">
                   <div className="config-card">
-                    <h3><MessageSquare size={20} /> Canal de Comunicación</h3>
-                    <p>Configura el número donde recibirás las reservas por WhatsApp.</p>
-                    <div className="form-inline">
+                    <h3><MessageSquare size={20} /> WhatsApp</h3>
+                    <p>Número para recibir reservas.</p>
+                    <div className="form-group">
                       <input 
                         type="text" 
                         value={whatsapp} 
                         onChange={(e) => setWhatsapp(e.target.value)} 
                         placeholder="Ej: 59899097344"
                       />
-                      <button onClick={handleUpdateWhatsapp} className="btn-primary">Guardar Número</button>
+                      <button onClick={handleUpdateWhatsapp} className="btn-primary" style={{marginTop: '10px'}}>Guardar Número</button>
                     </div>
                   </div>
 
                   <div className="config-card">
-                    <h3><User size={20} /> Capacidad por Turno</h3>
-                    <p>Número máximo de reservas permitidas para el mismo horario.</p>
-                    <div className="form-inline">
+                    <h3><User size={20} /> Capacidad</h3>
+                    <p>Cupos por cada horario.</p>
+                    <div className="form-group">
                       <input 
                         type="number" 
                         value={capacidad} 
                         min="1"
                         onChange={(e) => setCapacidad(parseInt(e.target.value))} 
                       />
-                      <button onClick={handleUpdateCapacidad} className="btn-primary">Actualizar Cupos</button>
+                      <button onClick={handleUpdateCapacidad} className="btn-primary" style={{marginTop: '10px'}}>Actualizar Cupos</button>
                     </div>
                   </div>
 
                   <div className="config-card">
-                    <h3><Clock size={20} /> Horarios Disponibles</h3>
-                    <p>Gestiona las horas que tus clientes pueden elegir.</p>
+                    <h3><Clock size={20} /> Horarios</h3>
+                    <p>Gestiona las horas disponibles.</p>
                     <div className="horarios-manager">
-                      <div className="form-inline">
+                      <div className="form-group">
                         <input 
                           type="text" 
                           value={newHora} 
                           onChange={(e) => setNewHora(e.target.value)} 
                           placeholder="Ej: 18:30"
                         />
-                        <button onClick={handleAddHorario} className="btn-add"><Plus size={18} /> Añadir Hora</button>
+                        <button onClick={handleAddHorario} className="btn-primary" style={{marginTop: '10px'}}>Añadir Hora</button>
                       </div>
                       <div className="horarios-tags">
                         {horarios.map(h => (
