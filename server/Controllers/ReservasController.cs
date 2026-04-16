@@ -18,31 +18,42 @@ public class ReservasController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CrearReserva([FromBody] Reserva nuevaReserva)
     {
-        if (nuevaReserva == null) return BadRequest();
-
-        // 1. Obtener capacidad configurada
-        var capacidadStr = await _context.Configuraciones
-            .Where(c => c.Clave == "Capacidad")
-            .Select(c => c.Valor)
-            .FirstOrDefaultAsync() ?? "1";
-        int.TryParse(capacidadStr, out int capacidad);
-
-        // 2. Contar reservas existentes para esa fecha y hora
-        var ocupados = await _context.Reservas
-            .CountAsync(r => r.Fecha == nuevaReserva.Fecha && r.Hora == nuevaReserva.Hora);
-
-        if (ocupados >= capacidad)
+        try 
         {
-            return BadRequest(new { error = "Lo sentimos, este horario acaba de completarse." });
+            if (nuevaReserva == null) return BadRequest(new { error = "Datos de reserva inválidos" });
+
+            Console.WriteLine($"[DEBUG] Intentando guardar reserva para: {nuevaReserva.Nombre} el {nuevaReserva.Fecha} a las {nuevaReserva.Hora}");
+
+            // 1. Obtener capacidad configurada
+            var capacidadStr = await _context.Configuraciones
+                .Where(c => c.Clave == "Capacidad")
+                .Select(c => c.Valor)
+                .FirstOrDefaultAsync() ?? "1";
+            int.TryParse(capacidadStr, out int capacidad);
+
+            // 2. Contar reservas existentes para esa fecha y hora
+            var ocupados = await _context.Reservas
+                .CountAsync(r => r.Fecha == nuevaReserva.Fecha && r.Hora == nuevaReserva.Hora);
+
+            if (ocupados >= capacidad)
+            {
+                return BadRequest(new { error = "Lo sentimos, este horario acaba de completarse." });
+            }
+            
+            nuevaReserva.FechaRegistro = DateTime.UtcNow; // Usar UTC para evitar problemas de servidor
+            _context.Reservas.Add(nuevaReserva);
+            await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"[DB SUCCESS] Reserva guardada con ID: {nuevaReserva.Id}");
+            
+            return Ok(new { success = true, id = nuevaReserva.Id });
         }
-        
-        nuevaReserva.FechaRegistro = DateTime.Now;
-        _context.Reservas.Add(nuevaReserva);
-        await _context.SaveChangesAsync();
-        
-        Console.WriteLine($"[DB] Nueva reserva guardada: {nuevaReserva.Nombre}");
-        
-        return Ok(new { success = true, id = nuevaReserva.Id });
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DATABASE ERROR] Error al guardar reserva: {ex.Message}");
+            if (ex.InnerException != null) Console.WriteLine($"[INNER ERROR] {ex.InnerException.Message}");
+            return StatusCode(500, new { error = "Error interno al guardar en base de datos", details = ex.Message });
+        }
     }
 
     [HttpGet]
