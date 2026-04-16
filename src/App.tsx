@@ -403,7 +403,7 @@ function App() {
                           <th>Teléfono</th>
                           <th>Servicio</th>
                           <th>Fecha/Hora</th>
-                          <th>Registro</th>
+                          <th>Acción</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -416,7 +416,18 @@ function App() {
                               <td>{r.telefono}</td>
                               <td>{r.servicio}</td>
                               <td>{r.fecha} {r.hora}</td>
-                              <td>{new Date(r.fechaRegistro).toLocaleDateString()}</td>
+                              <td>
+                                <button 
+                                  className="btn-icon" 
+                                  style={{color: '#25D366', display: 'flex', alignItems: 'center', gap: '5px'}}
+                                  onClick={() => {
+                                    const msg = `Hola ${r.nombre}! Confirmo tu reserva para el servicio de *${r.servicio}* el día ${r.fecha} a las ${r.hora}. ¡Te esperamos!`;
+                                    window.open(`https://wa.me/${r.telefono.replace(/\s+/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                                  }}
+                                >
+                                  <MessageSquare size={18} /> Confirmar
+                                </button>
+                              </td>
                             </tr>
                           ))
                         )}
