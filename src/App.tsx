@@ -419,10 +419,12 @@ function App() {
                               <td>
                                 <button 
                                   className="btn-icon" 
-                                  style={{color: '#25D366', display: 'flex', alignItems: 'center', gap: '5px'}}
+                                  style={{color: '#25D366', display: 'flex', alignItems: 'center', gap: '5px', width: 'auto'}}
                                   onClick={() => {
+                                    const cleanPhone = r.telefono.replace(/\D/g, ''); // Elimina todo lo que no sea número
                                     const msg = `Hola ${r.nombre}! Confirmo tu reserva para el servicio de *${r.servicio}* el día ${r.fecha} a las ${r.hora}. ¡Te esperamos!`;
-                                    window.open(`https://wa.me/${r.telefono.replace(/\s+/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+                                    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
+                                    window.open(url, '_blank');
                                   }}
                                 >
                                   <MessageSquare size={18} /> Confirmar
