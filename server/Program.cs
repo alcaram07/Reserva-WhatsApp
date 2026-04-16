@@ -83,6 +83,10 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 app.UseAuthorization();
+
+// Endpoint de salud para evitar que Render se duerma
+app.MapGet("/health", () => Results.Ok("Server is alive"));
+
 app.MapControllers();
 
 Console.WriteLine("[BOOT] Servidor listo para recibir clientes");
