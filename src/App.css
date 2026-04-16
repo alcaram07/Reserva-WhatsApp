@@ -34,11 +34,10 @@ body {
 }
 
 @media (max-width: 600px) {
-  .app-container {
-    padding: 10px;
-  }
+  .app-container { padding: 10px; }
 }
 
+/* Nav & Header */
 .admin-nav {
   display: flex;
   justify-content: flex-end;
@@ -58,7 +57,7 @@ body {
 
 .header {
   text-align: center;
-  padding: 20px 0 30px;
+  padding: 10px 0 30px;
 }
 
 .logo-badge {
@@ -72,18 +71,10 @@ body {
   margin-bottom: 10px;
 }
 
-.header h1 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-}
+.header h1 { margin: 0; font-size: 2rem; font-weight: 700; }
+.header p { margin: 10px 0 0; color: var(--text-muted); font-size: 1rem; }
 
-.header p {
-  margin: 10px 0 0;
-  color: var(--text-muted);
-  font-size: 1rem;
-}
-
+/* Main Layout */
 .main-content {
   flex: 1;
   background: var(--bg-card);
@@ -94,9 +85,8 @@ body {
 }
 
 @media (max-width: 600px) {
-  .main-content {
-    padding: 20px 15px;
-  }
+  .main-content { padding: 20px 15px; }
+  .header h1 { font-size: 1.6rem; }
 }
 
 /* Stepper */
@@ -118,109 +108,18 @@ body {
   justify-content: center;
   font-weight: bold;
   color: var(--text-muted);
-  transition: all 0.3s;
 }
 
 .step-dot.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: white;
-  transform: scale(1.1);
 }
 
-/* Services Grid */
-.services-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 15px;
-  margin-bottom: 30px;
-}
-
-@media (max-width: 600px) {
-  .services-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.service-card {
-  padding: 20px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.service-card:hover {
-  border-color: var(--primary-color);
-}
-
-.service-card.selected {
-  border-color: var(--primary-color);
-  background: #f0fff4;
-  box-shadow: 0 0 0 1px var(--primary-color);
-}
-
-.price {
-  font-weight: bold;
-  color: var(--primary-hover);
-  font-size: 1.2rem;
-  margin: 5px 0;
-}
-
-.duration {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-/* Admin Tabs */
-.admin-tabs {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 25px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 0;
-  flex-wrap: wrap;
-}
-
-.admin-tabs button {
-  background: transparent;
-  border: none;
-  padding: 12px 15px;
-  font-weight: 600;
-  color: var(--text-muted);
-  cursor: pointer;
-  white-space: nowrap;
-  font-size: 0.95rem;
-  border-bottom: 3px solid transparent;
-  flex: 1;
-  min-width: 100px;
-}
-
-.admin-tabs button.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-
-/* Config & Forms */
-.config-admin {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.config-card {
-  background: #f8fafc;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group input {
+/* Forms */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 600; }
+.form-group input, .form-group select {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--border-color);
@@ -228,42 +127,53 @@ body {
   font-size: 1rem;
 }
 
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-  padding: 14px;
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-}
+.button-group { display: flex; gap: 10px; margin-top: 20px; }
 
-.horario-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border: 1px solid var(--primary-color);
-  padding: 5px 12px;
-  border-radius: 20px;
-  margin: 4px;
-  color: var(--primary-color);
-  font-weight: 600;
-}
+/* Buttons */
+button { border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn-primary { background: var(--primary-color); color: white; padding: 14px; width: 100%; }
+.btn-secondary { background: #eee; color: #666; padding: 14px; flex: 1; }
+.btn-whatsapp { background: #25D366; color: white; padding: 14px; flex: 2; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-.horario-tag button {
-  background: transparent;
-  border: none;
-  color: #e63946;
-  cursor: pointer;
-}
+/* Services */
+.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+@media (max-width: 600px) { .services-grid { grid-template-columns: 1fr; } }
+.service-card { padding: 20px; border: 2px solid var(--border-color); border-radius: var(--border-radius); text-align: center; cursor: pointer; }
+.service-card.selected { border-color: var(--primary-color); background: #f0fff4; }
+.price { font-weight: bold; color: var(--primary-hover); font-size: 1.2rem; margin: 5px 0; }
+.duration { font-size: 0.85rem; color: var(--text-muted); }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+/* Admin Tabs */
+.admin-tabs { display: flex; gap: 5px; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+.admin-tabs button {
+  background: transparent; padding: 12px; flex: 1; min-width: 100px;
+  color: var(--text-muted); border-bottom: 3px solid transparent; border-radius: 0;
 }
+.admin-tabs button.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* Tables */
+.table-container { overflow-x: auto; margin-top: 20px; border: 1px solid var(--border-color); border-radius: 10px; }
+.admin-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+.admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+.admin-table th { background: #f8fafc; }
+
+/* Config */
+.config-admin { display: flex; flex-direction: column; gap: 20px; }
+.config-card { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+.config-card h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.config-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; }
+
+.horario-tag { display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--primary-color); padding: 5px 12px; border-radius: 20px; margin: 4px; color: var(--primary-color); font-size: 0.85rem; }
+.horario-tag button { background: transparent; color: #e63946; padding: 2px; }
+
+/* Summary */
+.summary-card { background: var(--bg-main); padding: 20px; border-radius: 12px; margin: 20px 0; }
+.summary-card h3 { margin-bottom: 10px; font-size: 1.1rem; }
+.summary-card p { margin-bottom: 5px; font-size: 0.95rem; }
+
+/* Login */
+.login-container { max-width: 400px; margin: 40px auto; }
+.login-form { display: flex; flex-direction: column; gap: 15px; }
+
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
