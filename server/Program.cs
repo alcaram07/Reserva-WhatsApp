@@ -20,18 +20,21 @@ if (!string.IsNullOrEmpty(databaseUrl) && (databaseUrl.StartsWith("postgres://")
     var formattedUrl = databaseUrl.Replace("postgresql://", "postgres://");
     var databaseUri = new Uri(formattedUrl);
     var userInfo = databaseUri.UserInfo.Split(':');
+    var dbName = databaseUri.AbsolutePath.TrimStart('/');
+    if (string.IsNullOrEmpty(dbName)) dbName = "neondb"; // Valor por defecto en Neon
     
     var npgsqlBuilder = new NpgsqlConnectionStringBuilder
     {
         Host = databaseUri.Host,
         Port = databaseUri.Port > 0 ? databaseUri.Port : 5432,
-        Database = databaseUri.AbsolutePath.TrimStart('/'),
+        Database = dbName,
         Username = userInfo[0],
         Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
         SslMode = SslMode.Require,
         TrustServerCertificate = true,
         Pooling = true,
-        KeepAlive = 30
+        KeepAlive = 30,
+        IncludeErrorDetail = true
     };
     connectionString = npgsqlBuilder.ToString();
     Console.WriteLine("[BOOT] Usando PostgreSQL (Neon)");
