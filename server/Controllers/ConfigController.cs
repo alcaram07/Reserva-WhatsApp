@@ -20,6 +20,8 @@ public class ConfigController : ControllerBase
     {
         var configs = await _context.Configuraciones.ToListAsync();
         var whatsapp = configs.FirstOrDefault(c => c.Clave == "WhatsApp")?.Valor ?? "59899097344";
+        var capacidadStr = configs.FirstOrDefault(c => c.Clave == "Capacidad")?.Valor ?? "1";
+        int.TryParse(capacidadStr, out int capacidad);
         
         var horarios = await _context.Horarios.OrderBy(h => h.Hora).ToListAsync();
         if (horarios.Count == 0)
@@ -30,7 +32,23 @@ public class ConfigController : ControllerBase
             horarios = await _context.Horarios.ToListAsync();
         }
 
-        return Ok(new { whatsapp, horarios });
+        return Ok(new { whatsapp, horarios, capacidad });
+    }
+
+    [HttpPost("capacidad")]
+    public async Task<IActionResult> UpdateCapacidad([FromBody] int nuevaCapacidad)
+    {
+        var config = await _context.Configuraciones.FirstOrDefaultAsync(c => c.Clave == "Capacidad");
+        if (config == null)
+        {
+            _context.Configuraciones.Add(new Configuracion { Clave = "Capacidad", Valor = nuevaCapacidad.ToString() });
+        }
+        else
+        {
+            config.Valor = nuevaCapacidad.ToString();
+        }
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true });
     }
 
     [HttpPost("whatsapp")]

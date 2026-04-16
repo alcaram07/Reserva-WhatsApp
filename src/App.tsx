@@ -33,8 +33,10 @@ function App() {
 
   // Estados de Configuración
   const [whatsapp, setWhatsapp] = useState('');
+  const [capacidad, setCapacidad] = useState(1);
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [newHora, setNewHora] = useState('');
+  const [ocupacion, setOcupacion] = useState<{hora: string, cantidad: number}[]>([]);
 
   // Estados para gestión de servicios
   const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
@@ -53,11 +55,28 @@ function App() {
       const response = await fetch(`${API_URL}/api/config`);
       const data = await response.json();
       setWhatsapp(data.whatsapp);
+      setCapacidad(data.capacidad);
       setHorarios(data.horarios);
     } catch (error) {
       console.error('Error al obtener config:', error);
     }
   };
+
+  const fetchOcupacion = async (fecha: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/reservas/ocupacion?fecha=${fecha}`);
+      const data = await response.json();
+      setOcupacion(data);
+    } catch (error) {
+      console.error('Error al obtener ocupación:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (date) {
+      fetchOcupacion(date);
+    }
+  }, [date]);
 
   const fetchServicios = async () => {
     try {
@@ -108,6 +127,19 @@ function App() {
         body: JSON.stringify(whatsapp)
       });
       alert('Número de WhatsApp actualizado');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleUpdateCapacidad = async () => {
+    try {
+      await fetch(`${API_URL}/api/config/capacidad`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(capacidad)
+      });
+      alert('Capacidad actualizada');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -210,7 +242,14 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reservaData)
       });
-      if (response.ok) console.log('Guardado en base de datos');
+      if (response.ok) {
+        console.log('Guardado en base de datos');
+        fetchOcupacion(date); // Actualizar cupos inmediatamente
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Hubo un problema al confirmar tu reserva.');
+        return; // Detener flujo de WhatsApp si falló el guardado
+      }
     } catch (error) {
       console.error('Error en backend:', error);
     }
@@ -280,9 +319,15 @@ function App() {
                   <label><Clock size={18} /> Hora</label>
                   <select value={time} onChange={(e) => setTime(e.target.value)}>
                     <option value="">Seleccionar hora</option>
-                    {horarios.map(h => (
-                      <option key={h.id} value={h.hora}>{h.hora}</option>
-                    ))}
+                    {horarios.map(h => {
+                      const ocupado = ocupacion.find(o => o.hora === h.hora)?.cantidad || 0;
+                      if (ocupado >= capacidad) return null;
+                      return (
+                        <option key={h.id} value={h.hora}>
+                          {h.hora} {ocupado > 0 ? `(${capacidad - ocupado} libres)` : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div className="button-group">
@@ -455,6 +500,20 @@ function App() {
                         placeholder="Ej: 59899097344"
                       />
                       <button onClick={handleUpdateWhatsapp} className="btn-primary">Guardar Número</button>
+                    </div>
+                  </div>
+
+                  <div className="config-card">
+                    <h3><User size={20} /> Capacidad por Turno</h3>
+                    <p>Número máximo de reservas permitidas para el mismo horario.</p>
+                    <div className="form-inline">
+                      <input 
+                        type="number" 
+                        value={capacidad} 
+                        min="1"
+                        onChange={(e) => setCapacidad(parseInt(e.target.value))} 
+                      />
+                      <button onClick={handleUpdateCapacidad} className="btn-primary">Actualizar Cupos</button>
                     </div>
                   </div>
 
