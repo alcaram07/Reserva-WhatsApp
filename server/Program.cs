@@ -14,10 +14,11 @@ builder.Services.AddOpenApi();
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 string connectionString;
 
-if (!string.IsNullOrEmpty(databaseUrl) && databaseUrl.StartsWith("postgres://"))
+if (!string.IsNullOrEmpty(databaseUrl) && (databaseUrl.StartsWith("postgres://") || databaseUrl.StartsWith("postgresql://")))
 {
-    // Convertir URL de Postgres a Connection String de .NET de forma profesional
-    var databaseUri = new Uri(databaseUrl);
+    // Asegurar que use postgres:// para el parser de Uri si viene como postgresql://
+    var formattedUrl = databaseUrl.Replace("postgresql://", "postgres://");
+    var databaseUri = new Uri(formattedUrl);
     var userInfo = databaseUri.UserInfo.Split(':');
     
     var npgsqlBuilder = new NpgsqlConnectionStringBuilder
