@@ -22,6 +22,7 @@ public class ConfigController : ControllerBase
         var whatsapp = configs.FirstOrDefault(c => c.Clave == "WhatsApp")?.Valor ?? "59899097344";
         var capacidadStr = configs.FirstOrDefault(c => c.Clave == "Capacidad")?.Valor ?? "1";
         var prefijo = configs.FirstOrDefault(c => c.Clave == "PrefijoPais")?.Valor ?? "598";
+        var nombreNegocio = configs.FirstOrDefault(c => c.Clave == "NombreNegocio")?.Valor ?? "Reserva Pro";
         int.TryParse(capacidadStr, out int capacidad);
         
         var horarios = await _context.Horarios.OrderBy(h => h.Hora).ToListAsync();
@@ -33,7 +34,23 @@ public class ConfigController : ControllerBase
             horarios = await _context.Horarios.ToListAsync();
         }
 
-        return Ok(new { whatsapp, horarios, capacidad, prefijo });
+        return Ok(new { whatsapp, horarios, capacidad, prefijo, nombreNegocio });
+    }
+
+    [HttpPost("nombre")]
+    public async Task<IActionResult> UpdateNombre([FromBody] string nuevoNombre)
+    {
+        var config = await _context.Configuraciones.FirstOrDefaultAsync(c => c.Clave == "NombreNegocio");
+        if (config == null)
+        {
+            _context.Configuraciones.Add(new Configuracion { Clave = "NombreNegocio", Valor = nuevoNombre });
+        }
+        else
+        {
+            config.Valor = nuevoNombre;
+        }
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true });
     }
 
     [HttpPost("prefijo")]

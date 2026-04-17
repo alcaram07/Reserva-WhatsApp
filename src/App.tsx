@@ -34,6 +34,7 @@ function App() {
   // Estados de Configuración
   const [whatsapp, setWhatsapp] = useState('');
   const [prefijoPais, setPrefijoPais] = useState('598');
+  const [nombreNegocio, setNombreNegocio] = useState('Reserva Pro');
   const [capacidad, setCapacidad] = useState(1);
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [newHora, setNewHora] = useState('');
@@ -59,6 +60,7 @@ function App() {
       setCapacidad(data.capacidad);
       setHorarios(data.horarios);
       if (data.prefijo) setPrefijoPais(data.prefijo);
+      if (data.nombreNegocio) setNombreNegocio(data.nombreNegocio);
     } catch (error) {
       console.error('Error al obtener config:', error);
     }
@@ -155,6 +157,19 @@ function App() {
         body: JSON.stringify(prefijoPais)
       });
       alert('Prefijo de país actualizado');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleUpdateNombre = async () => {
+    try {
+      await fetch(`${API_URL}/api/config/nombre`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nombreNegocio)
+      });
+      alert('Nombre del negocio actualizado');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -283,7 +298,7 @@ function App() {
       </nav>
 
       <header className="header">
-        <div className="logo-badge">Reserva Pro</div>
+        <div className="logo-badge">{nombreNegocio}</div>
         <h1>{view === 'user' ? 'Agenda tu cita' : 'Panel de Control'}</h1>
         <p>{view === 'user' ? 'Confirmación instantánea vía WhatsApp' : 'Gestión completa de reservas y configuración'}</p>
       </header>
@@ -545,6 +560,20 @@ function App() {
 
               {adminTab === 'config' && (
                 <section className="config-admin animate-fade-in">
+                  <div className="config-card">
+                    <h3><User size={20} /> Nombre del Negocio</h3>
+                    <p>Este nombre aparecerá en la cabecera de la web.</p>
+                    <div className="form-group">
+                      <input 
+                        type="text" 
+                        value={nombreNegocio} 
+                        onChange={(e) => setNombreNegocio(e.target.value)} 
+                        placeholder="Ej: Barbería El Rey"
+                      />
+                      <button onClick={handleUpdateNombre} className="btn-primary" style={{marginTop: '10px'}}>Guardar Nombre</button>
+                    </div>
+                  </div>
+
                   <div className="config-card">
                     <h3><MessageSquare size={20} /> WhatsApp</h3>
                     <p>Número para recibir reservas.</p>
