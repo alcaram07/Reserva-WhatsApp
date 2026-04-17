@@ -319,7 +319,14 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <button className="btn-primary" disabled={!selectedService} onClick={handleNextStep}>Continuar</button>
+                <button 
+                  className="btn-primary" 
+                  disabled={!selectedService} 
+                  onClick={handleNextStep}
+                  style={{ opacity: !selectedService ? 0.5 : 1, cursor: !selectedService ? 'not-allowed' : 'pointer' }}
+                >
+                  Continuar
+                </button>
               </section>
             )}
 
@@ -347,7 +354,14 @@ function App() {
                 </div>
                 <div className="button-group">
                   <button className="btn-secondary" onClick={handlePrevStep}>Volver</button>
-                  <button className="btn-primary" disabled={!date || !time} onClick={handleNextStep}>Continuar</button>
+                  <button 
+                    className="btn-primary" 
+                    disabled={!date || !time} 
+                    onClick={handleNextStep}
+                    style={{ opacity: (!date || !time) ? 0.5 : 1, cursor: (!date || !time) ? 'not-allowed' : 'pointer' }}
+                  >
+                    Continuar
+                  </button>
                 </div>
               </section>
             )}
@@ -373,7 +387,12 @@ function App() {
 
                 <div className="button-group">
                   <button className="btn-secondary" onClick={handlePrevStep}>Volver</button>
-                  <button className="btn-whatsapp" disabled={!name || !phone} onClick={sendWhatsApp}>
+                  <button 
+                    className="btn-whatsapp" 
+                    disabled={!name || !phone || name.length < 3 || phone.length < 7} 
+                    onClick={sendWhatsApp}
+                    style={{ opacity: (!name || !phone || name.length < 3 || phone.length < 7) ? 0.5 : 1, cursor: (!name || !phone || name.length < 3 || phone.length < 7) ? 'not-allowed' : 'pointer' }}
+                  >
                     <Send size={18} /> Confirmar por WhatsApp
                   </button>
                 </div>
