@@ -33,6 +33,7 @@ function App() {
 
   // Estados de Configuración
   const [whatsapp, setWhatsapp] = useState('');
+  const [prefijoPais, setPrefijoPais] = useState('598');
   const [capacidad, setCapacidad] = useState(1);
   const [horarios, setHorarios] = useState<Horario[]>([]);
   const [newHora, setNewHora] = useState('');
@@ -57,6 +58,7 @@ function App() {
       setWhatsapp(data.whatsapp);
       setCapacidad(data.capacidad);
       setHorarios(data.horarios);
+      if (data.prefijo) setPrefijoPais(data.prefijo);
     } catch (error) {
       console.error('Error al obtener config:', error);
     }
@@ -140,6 +142,19 @@ function App() {
         body: JSON.stringify(capacidad)
       });
       alert('Capacidad actualizada');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleUpdatePrefijo = async () => {
+    try {
+      await fetch(`${API_URL}/api/config/prefijo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prefijoPais)
+      });
+      alert('Prefijo de país actualizado');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -421,9 +436,18 @@ function App() {
                                   className="btn-icon" 
                                   style={{color: '#25D366', display: 'flex', alignItems: 'center', gap: '5px', width: 'auto'}}
                                   onClick={() => {
-                                    const cleanPhone = r.telefono.replace(/\D/g, ''); // Elimina todo lo que no sea número
+                                    let rawPhone = r.telefono.replace(/\D/g, ''); // Limpieza inicial
+                                    
+                                    // Lógica Inteligente: si empieza con 0, quitarlo
+                                    if (rawPhone.startsWith('0')) {
+                                      rawPhone = rawPhone.substring(1);
+                                    }
+                                    
+                                    // Si el número NO empieza ya con el prefijo configurado, agregarlo
+                                    const finalPhone = rawPhone.startsWith(prefijoPais) ? rawPhone : prefijoPais + rawPhone;
+                                    
                                     const msg = `Hola ${r.nombre}! Confirmo tu reserva para el servicio de *${r.servicio}* el día ${r.fecha} a las ${r.hora}. ¡Te esperamos!`;
-                                    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
+                                    const url = `https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
                                     window.open(url, '_blank');
                                   }}
                                 >
@@ -527,6 +551,20 @@ function App() {
                         onChange={(e) => setCapacidad(parseInt(e.target.value))} 
                       />
                       <button onClick={handleUpdateCapacidad} className="btn-primary" style={{marginTop: '10px'}}>Actualizar Cupos</button>
+                    </div>
+                  </div>
+
+                  <div className="config-card">
+                    <h3><Phone size={20} /> Prefijo País</h3>
+                    <p>Código internacional (ej: 598). Se usará para completar números que empiecen con 0.</p>
+                    <div className="form-group">
+                      <input 
+                        type="text" 
+                        value={prefijoPais} 
+                        onChange={(e) => setPrefijoPais(e.target.value)} 
+                        placeholder="Ej: 598"
+                      />
+                      <button onClick={handleUpdatePrefijo} className="btn-primary" style={{marginTop: '10px'}}>Guardar Prefijo</button>
                     </div>
                   </div>
 
