@@ -12,6 +12,14 @@ public class ReservaDbContext : DbContext
     public DbSet<Servicio> Servicios => Set<Servicio>();
     public DbSet<Configuracion> Configuraciones => Set<Configuracion>();
     public DbSet<Horario> Horarios => Set<Horario>();
+    public DbSet<Barbero> Barberos => Set<Barbero>();
+}
+
+public class Barbero
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string Especialidad { get; set; } = string.Empty;
 }
 
 public class Reserva
@@ -20,6 +28,7 @@ public class Reserva
     public string Nombre { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
     public string Servicio { get; set; } = string.Empty;
+    public string Barbero { get; set; } = string.Empty;
     public string Fecha { get; set; } = string.Empty;
     public string Hora { get; set; } = string.Empty;
     public DateTime FechaRegistro { get; set; }

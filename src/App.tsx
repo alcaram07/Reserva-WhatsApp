@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { Calendar, Clock, User, Phone, Send, Plus, Trash2, Edit2, Check, X, MessageSquare } from 'lucide-react'
+import { Calendar, Clock, User, Phone, Send, Plus, Trash2, Edit2, Check, X, MessageSquare, Scissors } from 'lucide-react'
 
 interface Servicio {
   id: number;
@@ -14,9 +14,15 @@ interface Horario {
   hora: string;
 }
 
+interface Barbero {
+  id: number;
+  nombre: string;
+  especialidad: string;
+}
+
 function App() {
   const [view, setView] = useState<'user' | 'admin'>('user');
-  const [adminTab, setAdminTab] = useState<'reservas' | 'servicios' | 'config'>('reservas');
+  const [adminTab, setAdminTab] = useState<'reservas' | 'servicios' | 'barberos' | 'config'>('reservas');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +31,8 @@ function App() {
   const [step, setStep] = useState(1);
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [selectedService, setSelectedService] = useState<Servicio | null>(null);
+  const [barberos, setBarberos] = useState<Barbero[]>([]);
+  const [selectedBarber, setSelectedBarber] = useState<Barbero | null>(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [name, setName] = useState('');
@@ -40,16 +48,20 @@ function App() {
   const [newHora, setNewHora] = useState('');
   const [ocupacion, setOcupacion] = useState<{hora: string, cantidad: number}[]>([]);
 
-  // Estados para gestión de servicios
+  // Estados para gestión de servicios y barberos
   const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
   const [newServicio, setNewServicio] = useState({ nombre: '', precio: '', duracion: '' });
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAddingServicio, setIsAddingServicio] = useState(false);
+  
+  const [newBarbero, setNewBarbero] = useState({ nombre: '', especialidad: '' });
+  const [isAddingBarbero, setIsAddingBarbero] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     fetchServicios();
     fetchConfig();
+    fetchBarberos();
   }, []);
 
   const fetchConfig = async () => {
@@ -63,6 +75,16 @@ function App() {
       if (data.nombreNegocio) setNombreNegocio(data.nombreNegocio);
     } catch (error) {
       console.error('Error al obtener config:', error);
+    }
+  };
+
+  const fetchBarberos = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/barberos`);
+      const data = await response.json();
+      setBarberos(data);
+    } catch (error) {
+      console.error('Error al obtener barberos:', error);
     }
   };
 
@@ -136,14 +158,14 @@ function App() {
     }
   };
 
-  const handleUpdateCapacidad = async () => {
+  const handleUpdateNombre = async () => {
     try {
-      await fetch(`${API_URL}/api/config/capacidad`, {
+      await fetch(`${API_URL}/api/config/nombre`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(capacidad)
+        body: JSON.stringify(nombreNegocio)
       });
-      alert('Capacidad actualizada');
+      alert('Nombre del negocio actualizado');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -162,14 +184,14 @@ function App() {
     }
   };
 
-  const handleUpdateNombre = async () => {
+  const handleUpdateCapacidad = async () => {
     try {
-      await fetch(`${API_URL}/api/config/nombre`, {
+      await fetch(`${API_URL}/api/config/capacidad`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nombreNegocio)
+        body: JSON.stringify(capacidad)
       });
-      alert('Nombre del negocio actualizado');
+      alert('Capacidad actualizada');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -209,47 +231,44 @@ function App() {
       if (response.ok) {
         fetchServicios();
         setNewServicio({ nombre: '', precio: '', duracion: '' });
-        setIsAdding(false);
+        setIsAddingServicio(false);
       }
     } catch (error) {
       console.error('Error al crear servicio:', error);
     }
   };
 
-  const handleEditarServicio = async () => {
-    if (!editingServicio) return;
+  const handleCrearBarbero = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/servicios/${editingServicio.id}`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/api/barberos`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingServicio)
+        body: JSON.stringify(newBarbero)
       });
       if (response.ok) {
-        fetchServicios();
-        setEditingServicio(null);
+        fetchBarberos();
+        setNewBarbero({ nombre: '', especialidad: '' });
+        setIsAddingBarbero(false);
       }
     } catch (error) {
-      console.error('Error al editar servicio:', error);
+      console.error('Error al crear barbero:', error);
     }
   };
 
-  const handleEliminarServicio = async (id: number) => {
-    if (!confirm('¿Seguro que quieres eliminar este servicio?')) return;
+  const handleEliminarBarbero = async (id: number) => {
+    if (!confirm('¿Seguro que quieres eliminar este barbero?')) return;
     try {
-      const response = await fetch(`${API_URL}/api/servicios/${id}`, {
-        method: 'DELETE'
-      });
-      if (response.ok) {
-        fetchServicios();
-      }
+      await fetch(`${API_URL}/api/barberos/${id}`, { method: 'DELETE' });
+      fetchBarberos();
     } catch (error) {
-      console.error('Error al eliminar servicio:', error);
+      console.error('Error:', error);
     }
   };
 
   const handleNextStep = () => {
     if (step === 1 && !selectedService) return;
-    if (step === 2 && (!date || !time)) return;
+    if (step === 2 && !selectedBarber) return;
+    if (step === 3 && (!date || !time)) return;
     setStep(step + 1);
   };
 
@@ -262,6 +281,7 @@ function App() {
       nombre: name,
       telefono: phone,
       servicio: selectedService?.nombre,
+      barbero: selectedBarber?.nombre,
       fecha: date,
       hora: time
     };
@@ -273,28 +293,27 @@ function App() {
         body: JSON.stringify(reservaData)
       });
       if (response.ok) {
-        console.log('Guardado en base de datos');
-        fetchOcupacion(date); // Actualizar cupos inmediatamente
+        fetchOcupacion(date);
       } else {
         const errorData = await response.json();
         alert(errorData.error || 'Hubo un problema al confirmar tu reserva.');
-        return; // Detener flujo de WhatsApp si falló el guardado
+        return;
       }
     } catch (error) {
       console.error('Error en backend:', error);
     }
 
-    const message = `Hola! Me gustaría realizar una reserva:%0A%0A*Servicio:* ${selectedService?.nombre}%0A*Fecha:* ${date}%0A*Hora:* ${time}%0A*Nombre:* ${name}%0A*Teléfono:* ${phone}%0A%0AConfirmame disponibilidad, por favor!`;
+    const message = `Hola! Me gustaría realizar una reserva:%0A%0A*Servicio:* ${selectedService?.nombre}%0A*Barbero:* ${selectedBarber?.nombre}%0A*Fecha:* ${date}%0A*Hora:* ${time}%0A*Nombre:* ${name}%0A*Teléfono:* ${phone}%0A%0AConfirmame disponibilidad, por favor!`;
     window.open(`https://wa.me/${whatsapp}?text=${message}`, '_blank');
   };
 
-  const progress = (step / 3) * 100;
+  const progress = (step / 4) * 100;
 
   return (
     <div className="app-container">
       <nav className="admin-nav">
         <button onClick={() => { setView('user'); setStep(1); }}>Reservar</button>
-        <button onClick={() => { setView('admin'); if (isLoggedIn) { fetchReservas(); fetchConfig(); } }}>Admin</button>
+        <button onClick={() => { setView('admin'); if (isLoggedIn) { fetchReservas(); fetchConfig(); fetchBarberos(); } }}>Admin</button>
       </nav>
 
       <header className="header">
@@ -305,13 +324,13 @@ function App() {
 
       {view === 'user' ? (
         <>
-          <div className="progress-container">
-            <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+          <div className="progress-container" style={{height: '6px', background: '#eee', borderRadius: '3px', marginBottom: '30px', overflow: 'hidden'}}>
+            <div className="progress-bar" style={{ width: `${progress}%`, height: '100%', background: 'var(--primary-color)', transition: '0.3s' }}></div>
           </div>
 
           <main className="main-content">
             <div className="stepper">
-              {[1, 2, 3].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <div key={s} className={`step-dot ${step >= s ? 'active' : ''}`}>
                   {s}
                 </div>
@@ -334,18 +353,38 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <button 
-                  className="btn-primary" 
-                  disabled={!selectedService} 
-                  onClick={handleNextStep}
-                  style={{ opacity: !selectedService ? 0.5 : 1, cursor: !selectedService ? 'not-allowed' : 'pointer' }}
-                >
-                  Continuar
-                </button>
+                <button className="btn-primary" disabled={!selectedService} onClick={handleNextStep} style={{ opacity: !selectedService ? 0.5 : 1 }}>Continuar</button>
               </section>
             )}
 
             {step === 2 && (
+              <section className="step-content animate-fade-in">
+                <h2>¿Con quién te gustaría atenderte?</h2>
+                <div className="services-grid">
+                  {barberos.length === 0 ? (
+                    <p>Cargando barberos...</p>
+                  ) : (
+                    barberos.map((barber) => (
+                      <div 
+                        key={barber.id} 
+                        className={`service-card ${selectedBarber?.id === barber.id ? 'selected' : ''}`}
+                        onClick={() => setSelectedBarber(barber)}
+                      >
+                        <Scissors size={32} style={{marginBottom: '10px', color: 'var(--primary-color)'}} />
+                        <h3>{barber.nombre}</h3>
+                        <p className="duration">{barber.especialidad}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="button-group">
+                  <button className="btn-secondary" onClick={handlePrevStep}>Volver</button>
+                  <button className="btn-primary" disabled={!selectedBarber} onClick={handleNextStep} style={{ opacity: !selectedBarber ? 0.5 : 1 }}>Continuar</button>
+                </div>
+              </section>
+            )}
+
+            {step === 3 && (
               <section className="step-content animate-fade-in">
                 <h2>Elige Fecha y Hora</h2>
                 <div className="form-group">
@@ -369,19 +408,12 @@ function App() {
                 </div>
                 <div className="button-group">
                   <button className="btn-secondary" onClick={handlePrevStep}>Volver</button>
-                  <button 
-                    className="btn-primary" 
-                    disabled={!date || !time} 
-                    onClick={handleNextStep}
-                    style={{ opacity: (!date || !time) ? 0.5 : 1, cursor: (!date || !time) ? 'not-allowed' : 'pointer' }}
-                  >
-                    Continuar
-                  </button>
+                  <button className="btn-primary" disabled={!date || !time} onClick={handleNextStep} style={{ opacity: (!date || !time) ? 0.5 : 1 }}>Continuar</button>
                 </div>
               </section>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <section className="step-content animate-fade-in">
                 <h2>Tus Datos</h2>
                 <div className="form-group">
@@ -395,19 +427,16 @@ function App() {
                 
                 <div className="summary-card">
                   <h3>Resumen de Reserva</h3>
+                  <p><strong>Negocio:</strong> {nombreNegocio}</p>
                   <p><strong>Servicio:</strong> {selectedService?.nombre}</p>
+                  <p><strong>Barbero:</strong> {selectedBarber?.nombre}</p>
                   <p><strong>Fecha:</strong> {date}</p>
                   <p><strong>Hora:</strong> {time}</p>
                 </div>
 
                 <div className="button-group">
                   <button className="btn-secondary" onClick={handlePrevStep}>Volver</button>
-                  <button 
-                    className="btn-whatsapp" 
-                    disabled={!name || !phone || name.length < 3 || phone.length < 7} 
-                    onClick={sendWhatsApp}
-                    style={{ opacity: (!name || !phone || name.length < 3 || phone.length < 7) ? 0.5 : 1, cursor: (!name || !phone || name.length < 3 || phone.length < 7) ? 'not-allowed' : 'pointer' }}
-                  >
+                  <button className="btn-whatsapp" disabled={!name || !phone || name.length < 3} onClick={sendWhatsApp}>
                     <Send size={18} /> Confirmar por WhatsApp
                   </button>
                 </div>
@@ -429,7 +458,7 @@ function App() {
                   <label>Contraseña</label>
                   <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
                 </div>
-                {loginError && <p className="error-message">{loginError}</p>}
+                {loginError && <p className="error-message" style={{color: 'red', marginBottom: '10px'}}>{loginError}</p>}
                 <button type="submit" className="btn-primary">Entrar</button>
               </form>
             </section>
@@ -438,6 +467,7 @@ function App() {
               <div className="admin-tabs">
                 <button className={adminTab === 'reservas' ? 'active' : ''} onClick={() => setAdminTab('reservas')}>Reservas</button>
                 <button className={adminTab === 'servicios' ? 'active' : ''} onClick={() => setAdminTab('servicios')}>Servicios</button>
+                <button className={adminTab === 'barberos' ? 'active' : ''} onClick={() => setAdminTab('barberos')}>Barberos</button>
                 <button className={adminTab === 'config' ? 'active' : ''} onClick={() => setAdminTab('config')}>Configuración</button>
               </div>
 
@@ -451,38 +481,32 @@ function App() {
                           <th>Cliente</th>
                           <th>Teléfono</th>
                           <th>Servicio</th>
+                          <th>Barbero</th>
                           <th>Fecha/Hora</th>
                           <th>Acción</th>
                         </tr>
                       </thead>
                       <tbody>
                         {reservas.length === 0 ? (
-                          <tr><td colSpan={5}>No hay reservas guardadas aún.</td></tr>
+                          <tr><td colSpan={6}>No hay reservas guardadas aún.</td></tr>
                         ) : (
                           reservas.map((r) => (
                             <tr key={r.id}>
                               <td>{r.nombre}</td>
                               <td>{r.telefono}</td>
                               <td>{r.servicio}</td>
+                              <td>{r.barbero || 'No asignado'}</td>
                               <td>{r.fecha} {r.hora}</td>
                               <td>
                                 <button 
                                   className="btn-icon" 
-                                  style={{color: '#25D366', display: 'flex', alignItems: 'center', gap: '5px', width: 'auto'}}
+                                  style={{color: '#25D366', display: 'flex', alignItems: 'center', gap: '5px'}}
                                   onClick={() => {
-                                    let rawPhone = r.telefono.replace(/\D/g, ''); // Limpieza inicial
-                                    
-                                    // Lógica Inteligente: si empieza con 0, quitarlo
-                                    if (rawPhone.startsWith('0')) {
-                                      rawPhone = rawPhone.substring(1);
-                                    }
-                                    
-                                    // Si el número NO empieza ya con el prefijo configurado, agregarlo
+                                    let rawPhone = r.telefono.replace(/\D/g, '');
+                                    if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
                                     const finalPhone = rawPhone.startsWith(prefijoPais) ? rawPhone : prefijoPais + rawPhone;
-                                    
-                                    const msg = `Hola ${r.nombre}! Confirmo tu reserva para el servicio de *${r.servicio}* el día ${r.fecha} a las ${r.hora}. ¡Te esperamos!`;
-                                    const url = `https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
-                                    window.open(url, '_blank');
+                                    const msg = `Hola ${r.nombre}! Confirmo tu reserva para *${r.servicio}* con *${r.barbero}* el día ${r.fecha} a las ${r.hora}. ¡Te esperamos!`;
+                                    window.open(`https://api.whatsapp.com/send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`, '_blank');
                                   }}
                                 >
                                   <MessageSquare size={18} /> Confirmar
@@ -494,63 +518,59 @@ function App() {
                       </tbody>
                     </table>
                   </div>
-                  <button className="btn-secondary" onClick={fetchReservas} style={{ marginTop: '20px' }}>Actualizar Lista</button>
                 </>
               )}
 
               {adminTab === 'servicios' && (
                 <section className="servicios-admin">
-                  <div className="admin-header">
+                  <div className="admin-header" style={{display: 'flex', justifyContent: 'space-between', marginBottom: '20px'}}>
                     <h2>Gestión de Servicios</h2>
-                    <button className="btn-add" onClick={() => setIsAdding(true)}><Plus size={18} /> Nuevo Servicio</button>
+                    <button className="btn-primary" style={{width: 'auto'}} onClick={() => setIsAddingServicio(true)}><Plus size={18} /> Nuevo</button>
                   </div>
-
                   <div className="table-container">
                     <table className="admin-table">
                       <thead>
-                        <tr>
-                          <th>Nombre</th>
-                          <th>Precio</th>
-                          <th>Duración</th>
-                          <th>Acciones</th>
-                        </tr>
+                        <tr><th>Nombre</th><th>Precio</th><th>Duración</th><th>Acciones</th></tr>
                       </thead>
                       <tbody>
-                        {isAdding && (
-                          <tr className="adding-row">
-                            <td><input type="text" placeholder="Nombre" value={newServicio.nombre} onChange={e => setNewServicio({...newServicio, nombre: e.target.value})} /></td>
-                            <td><input type="text" placeholder="Precio" value={newServicio.precio} onChange={e => setNewServicio({...newServicio, precio: e.target.value})} /></td>
-                            <td><input type="text" placeholder="Duración" value={newServicio.duracion} onChange={e => setNewServicio({...newServicio, duracion: e.target.value})} /></td>
-                            <td className="actions">
-                              <button onClick={handleCrearServicio} className="btn-icon save"><Check size={18} /></button>
-                              <button onClick={() => setIsAdding(false)} className="btn-icon cancel"><X size={18} /></button>
-                            </td>
+                        {isAddingServicio && (
+                          <tr>
+                            <td><input type="text" value={newServicio.nombre} onChange={e => setNewServicio({...newServicio, nombre: e.target.value})} /></td>
+                            <td><input type="text" value={newServicio.precio} onChange={e => setNewServicio({...newServicio, precio: e.target.value})} /></td>
+                            <td><input type="text" value={newServicio.duracion} onChange={e => setNewServicio({...newServicio, duracion: e.target.value})} /></td>
+                            <td><button onClick={handleCrearServicio}><Check size={18} /></button></td>
                           </tr>
                         )}
-                        {servicios.map((s) => (
-                          <tr key={s.id}>
-                            {editingServicio?.id === s.id ? (
-                              <>
-                                <td><input type="text" value={editingServicio.nombre} onChange={e => setEditingServicio({...editingServicio, nombre: e.target.value})} /></td>
-                                <td><input type="text" value={editingServicio.precio} onChange={e => setEditingServicio({...editingServicio, precio: e.target.value})} /></td>
-                                <td><input type="text" value={editingServicio.duracion} onChange={e => setEditingServicio({...editingServicio, duracion: e.target.value})} /></td>
-                                <td className="actions">
-                                  <button onClick={handleEditarServicio} className="btn-icon save"><Check size={18} /></button>
-                                  <button onClick={() => setEditingServicio(null)} className="btn-icon cancel"><X size={18} /></button>
-                                </td>
-                              </>
-                            ) : (
-                              <>
-                                <td>{s.nombre}</td>
-                                <td>{s.precio}</td>
-                                <td>{s.duracion}</td>
-                                <td className="actions">
-                                  <button onClick={() => setEditingServicio(s)} className="btn-icon"><Edit2 size={18} /></button>
-                                  <button onClick={() => handleEliminarServicio(s.id)} className="btn-icon delete"><Trash2 size={18} /></button>
-                                </td>
-                              </>
-                            )}
+                        {servicios.map(s => (
+                          <tr key={s.id}><td>{s.nombre}</td><td>{s.precio}</td><td>{s.duracion}</td><td><button onClick={() => handleEliminarServicio(s.id)}><Trash2 size={18} /></button></td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {adminTab === 'barberos' && (
+                <section className="servicios-admin">
+                  <div className="admin-header" style={{display: 'flex', justifyContent: 'space-between', marginBottom: '20px'}}>
+                    <h2>Nuestros Barberos</h2>
+                    <button className="btn-primary" style={{width: 'auto'}} onClick={() => setIsAddingBarbero(true)}><Plus size={18} /> Añadir Barbero</button>
+                  </div>
+                  <div className="table-container">
+                    <table className="admin-table">
+                      <thead>
+                        <tr><th>Nombre</th><th>Especialidad</th><th>Acciones</th></tr>
+                      </thead>
+                      <tbody>
+                        {isAddingBarbero && (
+                          <tr>
+                            <td><input type="text" value={newBarbero.nombre} onChange={e => setNewBarbero({...newBarbero, nombre: e.target.value})} /></td>
+                            <td><input type="text" value={newBarbero.especialidad} onChange={e => setNewBarbero({...newBarbero, especialidad: e.target.value})} /></td>
+                            <td><button onClick={handleCrearBarbero}><Check size={18} /></button></td>
                           </tr>
+                        )}
+                        {barberos.map(b => (
+                          <tr key={b.id}><td>{b.nombre}</td><td>{b.especialidad}</td><td><button onClick={() => handleEliminarBarbero(b.id)}><Trash2 size={18} /></button></td></tr>
                         ))}
                       </tbody>
                     </table>
@@ -559,84 +579,26 @@ function App() {
               )}
 
               {adminTab === 'config' && (
-                <section className="config-admin animate-fade-in">
-                  <div className="config-card">
+                <section className="config-admin">
+                   <div className="config-card">
                     <h3><User size={20} /> Nombre del Negocio</h3>
-                    <p>Este nombre aparecerá en la cabecera de la web.</p>
                     <div className="form-group">
-                      <input 
-                        type="text" 
-                        value={nombreNegocio} 
-                        onChange={(e) => setNombreNegocio(e.target.value)} 
-                        placeholder="Ej: Barbería El Rey"
-                      />
-                      <button onClick={handleUpdateNombre} className="btn-primary" style={{marginTop: '10px'}}>Guardar Nombre</button>
+                      <input type="text" value={nombreNegocio} onChange={(e) => setNombreNegocio(e.target.value)} />
+                      <button onClick={handleUpdateNombre} className="btn-primary" style={{marginTop: '10px'}}>Guardar</button>
                     </div>
                   </div>
-
                   <div className="config-card">
                     <h3><MessageSquare size={20} /> WhatsApp</h3>
-                    <p>Número para recibir reservas.</p>
                     <div className="form-group">
-                      <input 
-                        type="text" 
-                        value={whatsapp} 
-                        onChange={(e) => setWhatsapp(e.target.value)} 
-                        placeholder="Ej: 59899097344"
-                      />
-                      <button onClick={handleUpdateWhatsapp} className="btn-primary" style={{marginTop: '10px'}}>Guardar Número</button>
+                      <input type="text" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+                      <button onClick={handleUpdateWhatsapp} className="btn-primary" style={{marginTop: '10px'}}>Guardar</button>
                     </div>
                   </div>
-
-                  <div className="config-card">
-                    <h3><User size={20} /> Capacidad</h3>
-                    <p>Cupos por cada horario.</p>
-                    <div className="form-group">
-                      <input 
-                        type="number" 
-                        value={capacidad} 
-                        min="1"
-                        onChange={(e) => setCapacidad(parseInt(e.target.value))} 
-                      />
-                      <button onClick={handleUpdateCapacidad} className="btn-primary" style={{marginTop: '10px'}}>Actualizar Cupos</button>
-                    </div>
-                  </div>
-
                   <div className="config-card">
                     <h3><Phone size={20} /> Prefijo País</h3>
-                    <p>Código internacional (ej: 598). Se usará para completar números que empiecen con 0.</p>
                     <div className="form-group">
-                      <input 
-                        type="text" 
-                        value={prefijoPais} 
-                        onChange={(e) => setPrefijoPais(e.target.value)} 
-                        placeholder="Ej: 598"
-                      />
-                      <button onClick={handleUpdatePrefijo} className="btn-primary" style={{marginTop: '10px'}}>Guardar Prefijo</button>
-                    </div>
-                  </div>
-
-                  <div className="config-card">
-                    <h3><Clock size={20} /> Horarios</h3>
-                    <p>Gestiona las horas disponibles.</p>
-                    <div className="horarios-manager">
-                      <div className="form-group">
-                        <input 
-                          type="text" 
-                          value={newHora} 
-                          onChange={(e) => setNewHora(e.target.value)} 
-                          placeholder="Ej: 18:30"
-                        />
-                        <button onClick={handleAddHorario} className="btn-primary" style={{marginTop: '10px'}}>Añadir Hora</button>
-                      </div>
-                      <div className="horarios-tags">
-                        {horarios.map(h => (
-                          <span key={h.id} className="horario-tag">
-                            {h.hora}
-                            <button onClick={() => handleDeleteHorario(h.id)}><X size={14} /></button>
-                          </span>
-                        ))}
-                      </div>
+                      <input type="text" value={prefijoPais} onChange={(e) => setPrefijoPais(e.target.value)} />
+                      <button onClick={handleUpdatePrefijo} className="btn-primary" style={{marginTop: '10px'}}>Guardar</button>
                     </div>
                   </div>
                 </section>
@@ -647,7 +609,7 @@ function App() {
       )}
 
       <footer className="footer">
-        <p>&copy; 2024 Reserva Pro - Conexión directa vía WhatsApp</p>
+        <p>&copy; 2024 {nombreNegocio} - Conexión directa vía WhatsApp</p>
       </footer>
     </div>
   );
