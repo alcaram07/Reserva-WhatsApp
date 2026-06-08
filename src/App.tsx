@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { Calendar, Clock, User, Phone, Send, Plus, Trash2, Edit2, Check, X, MessageSquare, Scissors } from 'lucide-react'
+import { Calendar, Clock, User, Phone, Send, Plus, Trash2, Check, MessageSquare, Scissors } from 'lucide-react'
 
 interface Servicio {
   id: number;
@@ -45,11 +45,9 @@ function App() {
   const [nombreNegocio, setNombreNegocio] = useState('Reserva Pro');
   const [capacidad, setCapacidad] = useState(1);
   const [horarios, setHorarios] = useState<Horario[]>([]);
-  const [newHora, setNewHora] = useState('');
   const [ocupacion, setOcupacion] = useState<{hora: string, cantidad: number}[]>([]);
 
   // Estados para gestión de servicios y barberos
-  const [editingServicio, setEditingServicio] = useState<Servicio | null>(null);
   const [newServicio, setNewServicio] = useState({ nombre: '', precio: '', duracion: '' });
   const [isAddingServicio, setIsAddingServicio] = useState(false);
   
@@ -184,43 +182,6 @@ function App() {
     }
   };
 
-  const handleUpdateCapacidad = async () => {
-    try {
-      await fetch(`${API_URL}/api/config/capacidad`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(capacidad)
-      });
-      alert('Capacidad actualizada');
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const handleAddHorario = async () => {
-    if (!newHora) return;
-    try {
-      await fetch(`${API_URL}/api/config/horarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newHora)
-      });
-      setNewHora('');
-      fetchConfig();
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const handleDeleteHorario = async (id: number) => {
-    try {
-      await fetch(`${API_URL}/api/config/horarios/${id}`, { method: 'DELETE' });
-      fetchConfig();
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
   const handleCrearServicio = async () => {
     try {
       const response = await fetch(`${API_URL}/api/servicios`, {
@@ -235,6 +196,16 @@ function App() {
       }
     } catch (error) {
       console.error('Error al crear servicio:', error);
+    }
+  };
+
+  const handleEliminarServicio = async (id: number) => {
+    if (!confirm('¿Seguro que quieres eliminar este servicio?')) return;
+    try {
+      await fetch(`${API_URL}/api/servicios/${id}`, { method: 'DELETE' });
+      fetchServicios();
+    } catch (error) {
+      console.error('Error al eliminar servicio:', error);
     }
   };
 
