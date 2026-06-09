@@ -55,6 +55,9 @@ builder.Services.AddDbContext<ReservaDbContext>(options =>
     {
         options.UseSqlite(connectionString);
     }
+    
+    // Ignorar advertencia de cambios pendientes para evitar el FATAL ERROR en .NET 9
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
 
 // 3. Configurar CORS (Simplificado para máxima compatibilidad)
