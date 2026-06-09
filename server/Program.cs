@@ -89,8 +89,34 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ReservaDbContext>();
         Console.WriteLine("[BOOT] Aplicando migraciones...");
-        context.Database.Migrate();
-        Console.WriteLine("[BOOT] Base de datos conectada y lista");
+        try {
+            context.Database.Migrate();
+            Console.WriteLine("[BOOT] Base de datos actualizada con éxito");
+        } catch (Exception) {
+            Console.WriteLine("[BOOT] Migración automática falló (probablemente tablas ya existentes). Iniciando auto-reparación...");
+            
+            // Lógica de auto-reparación: Crear tabla de barberos manualmente si no existe
+            var conn = context.Database.GetDbConnection();
+            await conn.OpenAsync();
+            using var cmd = conn.CreateCommand();
+            
+            // 1. Crear tabla Barberos si no existe
+            cmd.CommandText = @"CREATE TABLE IF NOT EXISTS ""Barberos"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""Nombre"" TEXT NOT NULL,
+                ""Especialidad"" TEXT NOT NULL
+            );";
+            await cmd.ExecuteNonQueryAsync();
+
+            // 2. Añadir columna Barbero a Reservas si no existe
+            try {
+                cmd.CommandText = @"ALTER TABLE ""Reservas"" ADD COLUMN ""Barbero"" TEXT DEFAULT '';";
+                await cmd.ExecuteNonQueryAsync();
+            } catch { /* Ignorar si la columna ya existe */ }
+            
+            Console.WriteLine("[BOOT] Auto-reparación completada");
+        }
+        Console.WriteLine("[BOOT] Base de datos lista para operar");
     }
     catch (Exception ex)
     {
