@@ -54,7 +54,20 @@ function App() {
   const [newBarbero, setNewBarbero] = useState({ nombre: '', especialidad: '' });
   const [isAddingBarbero, setIsAddingBarbero] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  // Lógica de URL de API inteligente
+  const getApiUrl = () => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) return envUrl;
+    
+    // Si estamos en Vercel pero no tenemos la variable, usamos la de producción por defecto
+    if (window.location.hostname.includes('vercel.app')) {
+      return 'https://reserva-whatsapp.onrender.com';
+    }
+    
+    return 'http://localhost:5000';
+  };
+
+  const API_URL = getApiUrl();
 
   useEffect(() => {
     fetchServicios();
