@@ -193,24 +193,36 @@ function App() {
         fetchServicios();
         setNewServicio({ nombre: '', precio: '', duracion: '' });
         setIsAddingServicio(false);
+        alert('Servicio creado con éxito');
+      } else {
+        const errorData = await response.json();
+        alert('Error al crear servicio: ' + (errorData.error || response.statusText));
       }
     } catch (error) {
       console.error('Error al crear servicio:', error);
+      alert('Error de conexión al crear servicio');
     }
   };
 
   const handleEliminarServicio = async (id: number) => {
     if (!confirm('¿Seguro que quieres eliminar este servicio?')) return;
     try {
-      await fetch(`${API_URL}/api/servicios/${id}`, { method: 'DELETE' });
-      fetchServicios();
+      const response = await fetch(`${API_URL}/api/servicios/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        fetchServicios();
+        alert('Servicio eliminado');
+      } else {
+        alert('Error al eliminar servicio');
+      }
     } catch (error) {
       console.error('Error al eliminar servicio:', error);
+      alert('Error de conexión');
     }
   };
 
   const handleCrearBarbero = async () => {
     try {
+      console.log('Enviando nuevo barbero a:', `${API_URL}/api/barberos`);
       const response = await fetch(`${API_URL}/api/barberos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,9 +232,14 @@ function App() {
         fetchBarberos();
         setNewBarbero({ nombre: '', especialidad: '' });
         setIsAddingBarbero(false);
+        alert('Barbero añadido con éxito');
+      } else {
+        const errorData = await response.json();
+        alert('Error al crear barbero: ' + (errorData.error || response.statusText));
       }
     } catch (error) {
       console.error('Error al crear barbero:', error);
+      alert('Error de conexión al servidor: ' + error);
     }
   };
 
