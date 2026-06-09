@@ -54,10 +54,22 @@ function App() {
   const [newBarbero, setNewBarbero] = useState({ nombre: '', especialidad: '' });
   const [isAddingBarbero, setIsAddingBarbero] = useState(false);
 
-  // Forzamos la URL de producción para Vercel
-  const API_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
-    ? 'http://localhost:5000'
-    : 'https://reserva-whatsapp.onrender.com';
+  // Lógica de URL de API flexible
+  const getApiUrl = () => {
+    // 1. Prioridad máxima: Variable de entorno definida en Vercel/Local
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) return envUrl;
+    
+    // 2. Fallback: Si no hay variable, pero estamos en localhost
+    if (window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')) {
+      return 'http://localhost:5000';
+    }
+
+    // 3. Último recurso: El servidor de producción principal
+    return 'https://reserva-whatsapp.onrender.com';
+  };
+
+  const API_URL = getApiUrl();
 
   useEffect(() => {
     fetchServicios();
