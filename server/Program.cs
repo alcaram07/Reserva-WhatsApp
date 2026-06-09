@@ -57,16 +57,26 @@ builder.Services.AddDbContext<ReservaDbContext>(options =>
     }
 });
 
-// 3. Configurar CORS
+// 3. Configurar CORS (Simplificado para máxima compatibilidad)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
+
+// Middleware de Logs para diagnosticar en Render
+app.Use(async (context, next) => {
+    Console.WriteLine($"[REQ] {context.Request.Method} {context.Request.Path}");
+    await next();
+});
+
+app.UseCors("AllowAll");
 
 // --- INICIALIZACIÓN CRÍTICA DE BASE DE DATOS ---
 using (var scope = app.Services.CreateScope())
